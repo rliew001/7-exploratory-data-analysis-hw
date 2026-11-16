@@ -18,11 +18,13 @@ cities <- c("Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville
 # using station_name <- function ()
 
 read_weather <- function(namesofstations){
-  data <- read_csv(paste0("us-weather-history{station_name.csv"))
-  data <- data %>% mutate(station = station_name, date = as.Date(date))
+  data <- read_csv(str_glue("us-weather-history/{namesofstations}.csv"))
+  data <- data %>% mutate(station = namesofstations, date = as.Date(date))
   return(data)
 }
 read_weather("KCLT") %>% glimpse()
+
+
 
 # QUESTION 2
 #> Use map() and your new function to read in all 10 stations
@@ -41,32 +43,59 @@ print(ds1)
 #> and save the results to a new tibble
 #> Write a logical statement that would trigger a warning if any city did not have 365 days
 
+ds1 <- ds1 %>% mutate(city=factor(station,levels=stations,labels=cities))
 
+numberofcities <- ds1 %>% freq_table(city)
+print(numberofcities)
 
+daychecker <- numberofcities %>% filter(n!=365)
+if(nrow(daychecker)>0)print(str_glue("Bro:{nrow(daychecker)} cities do not have 365 days"))
 
 # QUESTION 4
 #> In question 3, all of the cities do have 365 days of data, so how would you know
 #> if your check worked? Create a test to mess up the dataset to make sure that your
 #> check does throw an error if the conditions aren't met
 
-
+datachecker <- ds1 %>% filter(!city=="Charlotte"& date== as.Date("2014-07-01"))
 
 #> At this point, your data should look like the "compiled_data.csv" file
 #> in data-clean. If it isn't, read in that file to use for the remaining
 #> questions so that you have the right data to work with.
 
+ds1 <- ds1 %>% mutate(city=factor(station,levels=stations,labels=cities))
+
+numberofcities <- datachecker %>% freq_table(city)
+print(numberofcities)
+
+daychecker <- numberofcities %>% filter(n!=365)
+if(nrow(daychecker)>0)print(str_glue("Bro:{nrow(daychecker)} cities do not have 365 days"))
+
+ds2 <- read_csv("data-clean/compiled_data.csv")
+
 # QUESTION 5
 #> Find a function that lets you pull out the month from the date 
 #> and make "month" a factor as a new variable in ds
 
-
-
+ds3 <- ds2 %>% mutate(month = month(date,label=TRUE))
+print(ds3)
 # QUESTION 7
 #> Use rstatix to check if there are any outliers for actual_mean_temp.
 #> Save the outliers to a new tibble.
 #> In a piped statement, filter out those outliers from ds and then use
 #> get_summary_stats() to get the mean and SE for actual_mean_temp
 #> by month.
+
+outliars <- ds3 %>% identify_outliers(actual_mean_temp)
+print(outliars)
+
+
+
+ds3 %>% filter(!(actual_mean_temp %in% outliars$actual_mean_temp)) %>% 
+  group_by(month) %>% 
+  get_summary_stats(actual_mean_temp, type ="mean_se")
+
+
+
 
 
 # QUESTION 8
@@ -76,11 +105,20 @@ print(ds1)
 #> Check the documentation for plot_correlation for an easy way to do this
 
 
+ds3 %>% select(city,actual_mean_temp:record_precipitation) %>% plot_boxplot(by = "city")
+ds3 %>% select(city,actual_mean_temp:record_precipitation) %>% plot_boxplot(by = "month")
+
+ds3 %>% plot_correlation(type='continuous')
+
+
 # QUESTION 9
 #> Create a scatterplot of actual_mean_temp (y axis) by date (x axis)
 #> Use facet_wrap to make a separate plot for each city (3 columns)
 #> Make the points different colors according to month
 
+ggplot(ds3, aes(x= date, y=actual_mean_temp,color=month))+
+  geom_point()+
+  facet_wrap("city",ncol=3)
 
 # QUESTION 10
 #> Write a function that takes the dataset and the abbreviate month as arguments
