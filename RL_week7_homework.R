@@ -14,8 +14,15 @@ cities <- c("Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville
 #> The function should return a tibble
 #> Call the function "read_weather" 
 #> Check by reading/glimpsing a single station's file
+# using as.date
+# using station_name <- function ()
 
-
+read_weather <- function(namesofstations){
+  data <- read_csv(paste0("us-weather-history{station_name.csv"))
+  data <- data %>% mutate(station = station_name, date = as.Date(date))
+  return(data)
+}
+read_weather("KCLT") %>% glimpse()
 
 # QUESTION 2
 #> Use map() and your new function to read in all 10 stations
@@ -23,7 +30,8 @@ cities <- c("Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville
 #> you will need to do so in the code with bind_rows()
 #> Save the resulting dataset to "ds"
 
-
+ds1 <- map(stations, read_weather) %>% bind_rows()
+print(ds1)
 
 
 # QUESTION 3
